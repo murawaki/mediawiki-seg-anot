@@ -1,0 +1,37 @@
+Text extraction from MediaWiki
+
+----------------------------------------
+    Requirement
+----------------------------------------
+- Python
+- mwlib ( http://mwlib.readthedocs.org/en/latest/index.html )
+    I only tested with older versions ~0.12.14.
+
+
+----------------------------------------
+    How to extract text
+----------------------------------------
+
+1. download an xml dump of Wikipedia, e.g., jawiki-20100910-pages-articles.xml.bz2
+
+2. store raw text data to Python's CDB files.
+  For some reasons, we create two versions.
+  - alldb:     all pages including redirects
+  - articledb: only valid articles; drop redirects, disambiguation pages, lists, etc.
+
+     python $EXTRACTOR_BASE/scripts/build_article_cdb.py --keep-redirect jawiki-20100910-pages-articles.xml.bz2 alldb
+     python $EXTRACTOR_BASE/scripts/build_article_cdb.py --filter jawiki-20100910-pages-articles.xml.bz2 articledb
+
+3. Extract the list of article titles
+     python $EXTRACTOR_BASE/scripts/list_titles.py articledb > article_titles
+
+4. Extract main text in parallel
+     sh $EXTRACTOR_BASE/compound/scripts/make_dump_task.sh article_titles articledb > tasks.dump
+     gxpc js -a work_file=tasks.dump
+   dumpXXX contains a set of articles which are separated by __ARTICLE__.
+
+0. Build a link db
+     python $EXTRACTOR_BASE/scripts/list_titles.py alldb > all_titles
+     sh $EXTRACTOR_BASE/scripts/make_dump_task.sh all_titles alldb | sed 's/parse_dump.py/extract_links.py/' > tasks.links
+     gxpc js -a workfile=tasks.links
+     { for f in dump*; do echo $f 1>&2; cat $f; done } | bzip2 -c > links.bz2
