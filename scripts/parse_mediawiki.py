@@ -4,15 +4,16 @@
 import sys
 import unicodedata
 import mwlib.parser.nodes
-from mwlib.cdbwiki import WikiDB
+from mwlib.cdb.cdbwiki import WikiDB
 from mwlib.uparser import parseString
 from mwlib import nuwiki
 
-templdbPath = '/willow4/murawaki/compound/data/db'
-contentdbPath = '/willow4/murawaki/compound/data/contentdb'
+# templdbPath = '/willow4/murawaki/compound/data/db'
+# contentdbPath = '/willow4/murawaki/compound/data/contentdb'
 # fpath = '/willow4/murawaki/compound/data/tmp'
-fpath = '/willow4/murawaki/compound/data/titles'
+# fpath = '/willow4/murawaki/compound/data/titles'
 # fpath = '/willow4/murawaki/compound/data/tmp2'
+templdbPath = contentdbPath = '/home/murawaki/research/crawler/mnwiki'
 
 class MediaWikiWikiSegmenter(object):
     # see http://meta.wikimedia.org/wiki/Help:HTML_in_wikitext
@@ -62,7 +63,6 @@ class MediaWikiWikiSegmenter(object):
             except AttributeError:
                 pass
         elif isinstance(node, mwlib.parser.nodes.Article):
-            # top level
             pass
         elif isinstance(node, mwlib.parser.nodes.Math) or \
                 isinstance(node, mwlib.parser.nodes.Timeline):
@@ -102,6 +102,9 @@ class MediaWikiWikiSegmenter(object):
 
     def traverse(self, node, output, depth):
         action = self.action(node)
+
+        if 'SKIP' in action:
+            return output
 
         if 'NEW_BLOCK' in action:
             # condition for reusing the last empty block
@@ -176,7 +179,7 @@ def main():
         # mwlib.refine.core.show(tree)
         output = segmenter.traverse(tree, [], 0)
         output = segmenter.cleanOutput(output)
-        segmenter.printOutput(output)
+        segmenter.printOutput(output, False)
 
 if __name__ == "__main__":
     main()
